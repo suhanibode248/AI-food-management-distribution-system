@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<nav>🍱 Food Redistribution System</nav>
+
+<div class="container">
+
+<h2>Welcome, {{session.user}}</h2>
+
+<!-- ADMIN: ADD FOOD -->
+{% if session.role == 'admin' %}
+<div class="card">
+    <h3>Add Food</h3>
+
+    <form action="/add_food" method="POST">
+        <input type="text" name="name" placeholder="Hotel Name" required>
+        <input type="text" name="food_type" placeholder="Food Type" required>
+        <input type="number" name="plates" placeholder="Plates" required>
+
+        <label>Prepared Time</label>
+        <input type="datetime-local" name="prep_time" required>
+
+        <label>Expiry Time</label>
+        <input type="datetime-local" name="expiry" required>
+
+        <input type="text" name="location" placeholder="Location" required>
+
+        <button type="submit">Add Food</button>
+    </form>
+</div>
+{% endif %}
+
+
+<!-- FOOD LIST -->
+<h3>Food Listings</h3>
+
+{% if food %}
+    {% for f in food %}
+    <div class="card">
+
+        <h4>{{f['name']}}</h4>
+
+        <p><b>Food:</b> {{f['food_type']}}</p>
+        <p><b>Plates:</b> {{f['plates']}}</p>
+        <p><b>Prepared:</b> {{f['prep_time']}}</p>
+        <p><b>Expiry:</b> {{f['expiry']}}</p>
+
+        <!-- MAP -->
+        <a href="https://www.google.com/maps/search/{{f['location']}}" target="_blank">
+            📍 View Location
+        </a>
+
+        <br><br>
+
+        <!-- STATUS -->
+        {% if f['status'] == 'available' %}
+            {% if session.role == 'ngo' %}
+                <a href="/request/{{f['id']}}">Request Food</a>
+            {% endif %}
+            <p style="color:green;">✅ Available</p>
+        {% else %}
+            <p style="color:red;">❌ Already Booked</p>
+        {% endif %}
+
+    </div>
+    {% endfor %}
+{% else %}
+    <p>No food available</p>
+{% endif %}
+
+
+<br>
+
+<a href="/history">📜 View History</a> |
+<a href="/reset">🔄 Reset Data</a> |
+<a href="/logout">🚪 Logout</a>
+
+</div>
+
+</body>
+</html>
