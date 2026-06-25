@@ -12,46 +12,49 @@ def get_db_connection():
     return conn
 
 def init_db():
-    conn = get_db_connection()
-    conn.execute("""
-    CREATE TABLE IF NOT EXISTS food (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        food_type TEXT,
-        plates INTEGER,
-        location TEXT,
-        prep_time TEXT,
-        expiry TEXT,
-        status TEXT
-    )
-    """)
-    conn.execute("""
-    CREATE TABLE IF NOT EXISTS history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        food_id INTEGER,
-        hotel_name TEXT,
-        ngo_name TEXT,
-        ngo TEXT,
-        time TEXT
-    )
-    """)
-    conn.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT,
-        password TEXT,
-        role TEXT
-    )
-    """)
-    
-    # Check if users exist, otherwise insert defaults
-    users = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
-    if users == 0:
-        conn.execute("INSERT INTO users VALUES (NULL, 'admin', '1234', 'admin')")
-        conn.execute("INSERT INTO users VALUES (NULL, 'ngo1', '1234', 'ngo')")
+    try:
+        conn = get_db_connection()
+        conn.execute("""
+        CREATE TABLE IF NOT EXISTS food (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            food_type TEXT,
+            plates INTEGER,
+            location TEXT,
+            prep_time TEXT,
+            expiry TEXT,
+            status TEXT
+        )
+        """)
+        conn.execute("""
+        CREATE TABLE IF NOT EXISTS history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            food_id INTEGER,
+            hotel_name TEXT,
+            ngo_name TEXT,
+            ngo TEXT,
+            time TEXT
+        )
+        """)
+        conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            password TEXT,
+            role TEXT
+        )
+        """)
         
-    conn.commit()
-    conn.close()
+        # Check if users exist, otherwise insert defaults
+        users = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        if users == 0:
+            conn.execute("INSERT INTO users VALUES (NULL, 'admin', '1234', 'admin')")
+            conn.execute("INSERT INTO users VALUES (NULL, 'ngo1', '1234', 'ngo')")
+            
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Database initialization exception (safe to ignore if locked): {e}")
 
 init_db()
 
