@@ -10,11 +10,6 @@
     <nav>
         <div class="nav-brand">FoodShare</div>
         <div class="nav-links" style="display: flex; align-items: center; gap: 1rem;">
-            <select id="langToggle" style="padding: 3px; background: rgba(0,0,0,0.5); color: white; border: 1px solid var(--border); border-radius: 4px;">
-                <option value="en">English</option>
-                <option value="hi">हिंदी (Hindi)</option>
-                <option value="mr">मराठी (Marathi)</option>
-            </select>
             <div style="background: rgba(16, 185, 129, 0.2); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; border: 1px solid rgba(16, 185, 129, 0.5);">
                 ⭐ {{ session.points|default(0) }} Points | 🎖️ {{ session.badges|default('Starter') }}
             </div>
@@ -298,24 +293,6 @@
 
     <!-- Scripts -->
     <script>
-        // Simple Demo Translation Dictionary
-        const translations = {
-            en: { welcome: "Welcome back", total: "Total Donations", history: "History" },
-            hi: { welcome: "वापसी पर स्वागत है", total: "कुल दान", history: "इतिहास" },
-            mr: { welcome: "परत आल्याबद्दल स्वागत आहे", total: "एकूण देणगी", history: "इतिहास" }
-        };
-
-        document.getElementById('langToggle').addEventListener('change', (e) => {
-            const lang = e.target.value;
-            // Extremely basic demo translation for a few elements
-            if(lang !== 'en') {
-                document.querySelectorAll('.welcome h1').forEach(el => el.innerHTML = translations[lang].welcome + "!");
-                document.querySelectorAll('.nav-links a[href="/history"]').forEach(el => el.innerHTML = "📜 " + translations[lang].history);
-            } else {
-                location.reload(); // Reload to reset to English
-            }
-        });
-
         document.addEventListener("DOMContentLoaded", () => {
             // AI Fetch
             const foodCards = document.querySelectorAll('.food-card');
