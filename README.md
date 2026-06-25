@@ -8,12 +8,11 @@
 # FoodShare: AI-Powered Food Waste Management & Distribution System
 
 **Author(s):** Suhani Bode
+
 **Affiliation:** RTM Nagpur University
+
 **Date:** June 2026
 
-## Deploy Link
-
-🔗 https://ai-food-management-distribution-system.onrender.com/
 
 ---
 
