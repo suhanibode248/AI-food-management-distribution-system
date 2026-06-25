@@ -67,6 +67,32 @@ def init_db():
             conn.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('ngo1', pw, 'ngo'))
             conn.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('driver1', pw, 'driver'))
             
+            # Seed default food data so it's not empty on Render
+            from datetime import timedelta
+            now = datetime.now()
+            t1_prep = (now - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M")
+            t1_exp = (now + timedelta(hours=4)).strftime("%Y-%m-%dT%H:%M")
+            t2_prep = (now - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M")
+            t2_exp = (now + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M")
+            t3_prep = (now - timedelta(hours=3)).strftime("%Y-%m-%dT%H:%M")
+            t3_exp = (now + timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M")
+
+            # Available food
+            conn.execute(
+                "INSERT INTO food (name, food_type, plates, location, prep_time, expiry, status, is_veg, ai_freshness_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                ("Grand Palace Hotel", "Vegetable Biryani", 50, "Downtown Avenue", t1_prep, t1_exp, "available", 1, "98% Fresh")
+            )
+            # Approved food (waiting for driver)
+            conn.execute(
+                "INSERT INTO food (name, food_type, plates, location, prep_time, expiry, status, requested_by, is_veg, ai_freshness_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                ("Sunrise Bakery", "Assorted Bread & Pastries", 20, "Westside Market", t2_prep, t2_exp, "approved", "ngo1", 1, "95% Fresh")
+            )
+            # Requested food
+            conn.execute(
+                "INSERT INTO food (name, food_type, plates, location, prep_time, expiry, status, requested_by, is_veg, ai_freshness_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                ("Ocean Catch", "Grilled Salmon", 15, "Pier 39", t3_prep, t3_exp, "requested", "ngo1", 0, "90% Fresh")
+            )
+            
         conn.commit()
         conn.close()
     except Exception as e:
@@ -153,6 +179,30 @@ def setup_db():
             conn.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('admin', pw, 'admin'))
             conn.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('ngo1', pw, 'ngo'))
             conn.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('driver1', pw, 'driver'))
+            
+            # Seed default food data so it's not empty on Render
+            from datetime import timedelta
+            now = datetime.now()
+            t1_prep = (now - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M")
+            t1_exp = (now + timedelta(hours=4)).strftime("%Y-%m-%dT%H:%M")
+            t2_prep = (now - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M")
+            t2_exp = (now + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M")
+            t3_prep = (now - timedelta(hours=3)).strftime("%Y-%m-%dT%H:%M")
+            t3_exp = (now + timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M")
+
+            conn.execute(
+                "INSERT INTO food (name, food_type, plates, location, prep_time, expiry, status, is_veg, ai_freshness_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                ("Grand Palace Hotel", "Vegetable Biryani", 50, "Downtown Avenue", t1_prep, t1_exp, "available", 1, "98% Fresh")
+            )
+            conn.execute(
+                "INSERT INTO food (name, food_type, plates, location, prep_time, expiry, status, requested_by, is_veg, ai_freshness_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                ("Sunrise Bakery", "Assorted Bread & Pastries", 20, "Westside Market", t2_prep, t2_exp, "approved", "ngo1", 1, "95% Fresh")
+            )
+            conn.execute(
+                "INSERT INTO food (name, food_type, plates, location, prep_time, expiry, status, requested_by, is_veg, ai_freshness_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                ("Ocean Catch", "Grilled Salmon", 15, "Pier 39", t3_prep, t3_exp, "requested", "ngo1", 0, "90% Fresh")
+            )
+            
         conn.commit()
         conn.close()
         return "Database created successfully! You can now visit /login", 200
