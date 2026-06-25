@@ -23,7 +23,8 @@ def init_db():
             location TEXT,
             prep_time TEXT,
             expiry TEXT,
-            status TEXT
+            status TEXT,
+            requested_by TEXT
         )
         """)
         conn.execute("""
@@ -96,7 +97,8 @@ def setup_db():
             location TEXT,
             prep_time TEXT,
             expiry TEXT,
-            status TEXT
+            status TEXT,
+            requested_by TEXT
         )
         """)
         conn.execute("""
@@ -190,25 +192,66 @@ def request_food(id):
     food = conn.execute("SELECT * FROM food WHERE id = ?", (id,)).fetchone()
     
     if food and food["status"] == "available":
-        conn.execute("UPDATE food SET status = 'booked' WHERE id = ?", (id,))
-        time_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        try:
-            conn.execute("INSERT INTO history (hotel_name, ngo_name, time) VALUES (?, ?, ?)", (food["name"], session["user"], time_now))
-        except sqlite3.OperationalError:
-            try:
-                conn.execute("INSERT INTO history (hotel_name, ngo, time) VALUES (?, ?, ?)", (food["name"], session["user"], time_now))
-            except sqlite3.OperationalError:
-                conn.execute("INSERT INTO history (food_id, ngo, time) VALUES (?, ?, ?)", (id, session["user"], time_now))
-
+        conn.execute("UPDATE food SET status = 'requested', requested_by = ? WHERE id = ?", (session["user"], id))
         conn.commit()
         conn.close()
         
-        flash("Request Confirmed! An SMS notification has been sent to the donor. 📩", "success")
+        flash("Request sent! Waiting for donor approval. ⏳", "success")
         return redirect(url_for("dashboard"))
     
     conn.close()
     flash("Sorry, this food is no longer available.", "error")
+    return redirect(url_for("dashboard"))
+
+@app.route("/approve/<int:id>")
+def approve_food(id):
+    if session.get("role") != "admin":
+        return redirect(url_for("dashboard"))
+    
+    conn = get_db_connection()
+    food = conn.execute("SELECT * FROM food WHERE id = ?", (id,)).fetchone()
+    
+    if food and food["status"] == "requested":
+        ngo_name = food["requested_by"]
+        conn.execute("UPDATE food SET status = 'booked' WHERE id = ?", (id,))
+        time_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        try:
+            conn.execute("INSERT INTO history (hotel_name, ngo_name, time) VALUES (?, ?, ?)", (food["name"], ngo_name, time_now))
+        except sqlite3.OperationalError:
+            try:
+                conn.execute("INSERT INTO history (hotel_name, ngo, time) VALUES (?, ?, ?)", (food["name"], ngo_name, time_now))
+            except sqlite3.OperationalError:
+                conn.execute("INSERT INTO history (food_id, ngo, time) VALUES (?, ?, ?)", (id, ngo_name, time_now))
+        
+        conn.commit()
+        conn.close()
+        
+        flash(f"Request Approved! {ngo_name} has been notified to collect the food. ✅", "success")
+        return redirect(url_for("dashboard"))
+    
+    conn.close()
+    flash("Action not possible.", "error")
+    return redirect(url_for("dashboard"))
+
+@app.route("/reject/<int:id>")
+def reject_food(id):
+    if session.get("role") != "admin":
+        return redirect(url_for("dashboard"))
+    
+    conn = get_db_connection()
+    food = conn.execute("SELECT * FROM food WHERE id = ?", (id,)).fetchone()
+    
+    if food and food["status"] == "requested":
+        conn.execute("UPDATE food SET status = 'available', requested_by = NULL WHERE id = ?", (id,))
+        conn.commit()
+        conn.close()
+        
+        flash("Request Rejected. Food is back to available pool. ❌", "success")
+        return redirect(url_for("dashboard"))
+    
+    conn.close()
+    flash("Action not possible.", "error")
     return redirect(url_for("dashboard"))
 
 @app.route("/history")

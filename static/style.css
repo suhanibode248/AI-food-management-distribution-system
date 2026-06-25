@@ -381,9 +381,15 @@ input::placeholder {
 }
 
 .status-badge.available {
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--primary);
-    border: 1px solid var(--primary-glow);
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.5);
+}
+
+.status-badge.requested {
+    background: rgba(234, 179, 8, 0.2);
+    color: #fde047;
+    border: 1px solid rgba(234, 179, 8, 0.5);
 }
 
 .status-badge.booked {

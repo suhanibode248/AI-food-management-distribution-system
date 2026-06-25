@@ -135,10 +135,16 @@
                                 <div class="food-card-title">{{ f['name'] }}</div>
                                 <div class="food-card-subtitle">📍 {{ f['location'] }}</div>
                             </div>
-                            <span class="status-badge {% if f['status'] == 'available' %}available{% else %}booked{% endif %}">
-                                {{ f['status'] }}
+                            <span class="status-badge {% if f['status'] == 'available' %}available{% elif f['status'] == 'requested' %}requested{% else %}booked{% endif %}">
+                                {{ f['status']|title }}
                             </span>
                         </div>
+                        
+                        {% if session.role == 'admin' and f['status'] == 'requested' %}
+                        <div style="background: rgba(234, 179, 8, 0.2); border: 1px solid #eab308; padding: 0.5rem; border-radius: 8px; margin-bottom: 1rem; color: #fde047; text-align: center; font-weight: 500;">
+                            Requested by: <strong>{{ f['requested_by'] }}</strong>
+                        </div>
+                        {% endif %}
 
                         <div class="food-details-grid">
                             <div class="detail-item">
@@ -165,16 +171,31 @@
                             <span class="ai-badge-text">Generating AI Insights...</span>
                         </div>
 
-                        <div class="mt-2" style="display: flex; gap: 1rem;">
+                        <div class="mt-2" style="display: flex; gap: 1rem; flex-wrap: wrap;">
                             <!-- Map Link -->
-                            <a href="https://www.google.com/maps/search/{{ f['location'] }}" target="_blank" class="btn" style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid var(--border); text-align: center;">
+                            <a href="https://www.google.com/maps/search/{{ f['location'] }}" target="_blank" class="btn" style="flex: 1; min-width: 120px; background: rgba(255,255,255,0.1); border: 1px solid var(--border); text-align: center;">
                                 📍 Map
                             </a>
 
-                            {% if f['status'] == 'available' and session.role == 'ngo' %}
-                                <a href="/request/{{ f['id'] }}" class="btn btn-primary" style="flex: 2; text-align: center;">
-                                    ✨ Request Food
-                                </a>
+                            {% if session.role == 'ngo' %}
+                                {% if f['status'] == 'available' %}
+                                    <a href="/request/{{ f['id'] }}" class="btn btn-primary" style="flex: 2; min-width: 150px; text-align: center;">
+                                        ✨ Request Food
+                                    </a>
+                                {% elif f['status'] == 'requested' and f['requested_by'] == session.user %}
+                                    <button disabled class="btn" style="flex: 2; min-width: 150px; background: #eab308; color: black; font-weight: bold; cursor: not-allowed; opacity: 0.8;">
+                                        ⏳ Pending Approval
+                                    </button>
+                                {% endif %}
+                            {% elif session.role == 'admin' %}
+                                {% if f['status'] == 'requested' %}
+                                    <a href="/approve/{{ f['id'] }}" class="btn" style="flex: 1; min-width: 100px; background: #22c55e; color: white; text-align: center; border: none;">
+                                        ✅ Approve
+                                    </a>
+                                    <a href="/reject/{{ f['id'] }}" class="btn" style="flex: 1; min-width: 100px; background: #ef4444; color: white; text-align: center; border: none;">
+                                        ❌ Reject
+                                    </a>
+                                {% endif %}
                             {% endif %}
                         </div>
                     </div>
