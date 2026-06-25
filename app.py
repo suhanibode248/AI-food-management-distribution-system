@@ -1,7 +1,10 @@
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from datetime import datetime
-from model import predict_demand
+import os
+from model import predict_demand, analyze_food_image, chat_response
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_foodshare_key'
@@ -24,7 +27,11 @@ def init_db():
             prep_time TEXT,
             expiry TEXT,
             status TEXT,
-            requested_by TEXT
+            requested_by TEXT,
+            is_veg INTEGER DEFAULT 1,
+            image_path TEXT,
+            ai_freshness_score TEXT,
+            assigned_driver TEXT
         )
         """)
         conn.execute("""
@@ -34,7 +41,10 @@ def init_db():
             hotel_name TEXT,
             ngo_name TEXT,
             ngo TEXT,
-            time TEXT
+            time TEXT,
+            rating INTEGER,
+            review TEXT,
+            co2_saved REAL
         )
         """)
         conn.execute("""
@@ -42,15 +52,20 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT,
             password TEXT,
-            role TEXT
+            role TEXT,
+            phone TEXT,
+            points INTEGER DEFAULT 0,
+            badges TEXT
         )
         """)
         
         # Check if users exist, otherwise insert defaults
         users = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         if users == 0:
-            conn.execute("INSERT INTO users VALUES (NULL, 'admin', '1234', 'admin')")
-            conn.execute("INSERT INTO users VALUES (NULL, 'ngo1', '1234', 'ngo')")
+            pw = generate_password_hash('1234')
+            conn.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('admin', pw, 'admin'))
+            conn.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('ngo1', pw, 'ngo'))
+            conn.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('driver1', pw, 'driver'))
             
         conn.commit()
         conn.close()
@@ -79,6 +94,9 @@ def get_dashboard_stats():
     completed_requests_row = conn.execute("SELECT COUNT(id) as count FROM history").fetchone()
     stats['completed_requests'] = completed_requests_row['count'] if completed_requests_row else 0
     
+    co2_row = conn.execute("SELECT SUM(co2_saved) as total FROM history").fetchone()
+    stats['co2_saved'] = round(co2_row['total'] or 0, 1)
+    
     conn.close()
     return stats
 
@@ -98,7 +116,11 @@ def setup_db():
             prep_time TEXT,
             expiry TEXT,
             status TEXT,
-            requested_by TEXT
+            requested_by TEXT,
+            is_veg INTEGER DEFAULT 1,
+            image_path TEXT,
+            ai_freshness_score TEXT,
+            assigned_driver TEXT
         )
         """)
         conn.execute("""
@@ -108,7 +130,10 @@ def setup_db():
             hotel_name TEXT,
             ngo_name TEXT,
             ngo TEXT,
-            time TEXT
+            time TEXT,
+            rating INTEGER,
+            review TEXT,
+            co2_saved REAL
         )
         """)
         conn.execute("""
@@ -116,13 +141,18 @@ def setup_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT,
             password TEXT,
-            role TEXT
+            role TEXT,
+            phone TEXT,
+            points INTEGER DEFAULT 0,
+            badges TEXT
         )
         """)
         users = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         if users == 0:
-            conn.execute("INSERT INTO users VALUES (NULL, 'admin', '1234', 'admin')")
-            conn.execute("INSERT INTO users VALUES (NULL, 'ngo1', '1234', 'ngo')")
+            pw = generate_password_hash('1234')
+            conn.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('admin', pw, 'admin'))
+            conn.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('ngo1', pw, 'ngo'))
+            conn.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ('driver1', pw, 'driver'))
         conn.commit()
         conn.close()
         return "Database created successfully! You can now visit /login", 200
@@ -140,12 +170,51 @@ def index():
 def login():
     if request.method == "POST":
         username = request.form["username"]
+        password = request.form["password"]
         role = request.form["role"]
-        session["user"] = username
-        session["role"] = role
-        flash(f"Welcome back, {username}!", "success")
-        return redirect(url_for("dashboard"))
+        
+        conn = get_db_connection()
+        user = conn.execute("SELECT * FROM users WHERE username = ? AND role = ?", (username, role)).fetchone()
+        conn.close()
+        
+        if user and (check_password_hash(user['password'], password) or user['password'] == password):
+            session["user"] = username
+            session["role"] = role
+            session["points"] = user['points']
+            session["badges"] = user['badges'] or "Starter"
+            flash(f"Welcome back, {username}!", "success")
+            return redirect(url_for("dashboard"))
+        else:
+            flash("Invalid credentials or role. Please try again.", "error")
+            
     return render_template("login.html")
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        role = request.form["role"]
+        phone = request.form["phone"]
+        
+        conn = get_db_connection()
+        user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+        
+        if user:
+            conn.close()
+            flash("Username already exists.", "error")
+            return redirect(url_for("register"))
+            
+        hashed_pw = generate_password_hash(password)
+        conn.execute("INSERT INTO users (username, password, role, phone) VALUES (?, ?, ?, ?)", 
+                     (username, hashed_pw, role, phone))
+        conn.commit()
+        conn.close()
+        
+        flash("Account created successfully! Please log in.", "success")
+        return redirect(url_for("login"))
+        
+    return render_template("register.html")
 
 @app.route("/dashboard")
 def dashboard():
@@ -154,6 +223,13 @@ def dashboard():
     
     conn = get_db_connection()
     food_list = conn.execute("SELECT * FROM food ORDER BY id DESC").fetchall()
+    
+    # Refresh points in session
+    user = conn.execute("SELECT points, badges FROM users WHERE username = ?", (session["user"],)).fetchone()
+    if user:
+        session["points"] = user["points"]
+        session["badges"] = user["badges"] or "Starter"
+        
     conn.close()
     
     stats = get_dashboard_stats()
@@ -171,11 +247,23 @@ def add_food():
     location = request.form["location"]
     prep_time = request.form["prep_time"]
     expiry = request.form["expiry"]
+    is_veg = request.form.get("is_veg", 1)
+    
+    image_path = ""
+    if 'image' in request.files:
+        file = request.files['image']
+        if file.filename != '':
+            filename = secure_filename(file.filename)
+            file_path = os.path.join('static', 'uploads', filename)
+            file.save(file_path)
+            image_path = f"/static/uploads/{filename}"
+            
+    freshness = analyze_food_image(prep_time)
 
     conn = get_db_connection()
     conn.execute(
-        "INSERT INTO food (name, food_type, plates, location, prep_time, expiry, status) VALUES (?, ?, ?, ?, ?, ?, 'available')",
-        (name, food_type, plates, location, prep_time, expiry)
+        "INSERT INTO food (name, food_type, plates, location, prep_time, expiry, status, is_veg, image_path, ai_freshness_score) VALUES (?, ?, ?, ?, ?, ?, 'available', ?, ?, ?)",
+        (name, food_type, plates, location, prep_time, expiry, is_veg, image_path, freshness)
     )
     conn.commit()
     conn.close()
@@ -213,23 +301,65 @@ def approve_food(id):
     
     if food and food["status"] == "requested":
         ngo_name = food["requested_by"]
-        conn.execute("UPDATE food SET status = 'booked' WHERE id = ?", (id,))
-        time_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        try:
-            conn.execute("INSERT INTO history (hotel_name, ngo_name, time) VALUES (?, ?, ?)", (food["name"], ngo_name, time_now))
-        except sqlite3.OperationalError:
-            try:
-                conn.execute("INSERT INTO history (hotel_name, ngo, time) VALUES (?, ?, ?)", (food["name"], ngo_name, time_now))
-            except sqlite3.OperationalError:
-                conn.execute("INSERT INTO history (food_id, ngo, time) VALUES (?, ?, ?)", (id, ngo_name, time_now))
-        
+        conn.execute("UPDATE food SET status = 'approved' WHERE id = ?", (id,))
         conn.commit()
         conn.close()
         
-        flash(f"Request Approved! {ngo_name} has been notified to collect the food. ✅", "success")
+        flash(f"Request Approved! Waiting for a driver to accept the delivery. ✅", "success")
         return redirect(url_for("dashboard"))
     
+    conn.close()
+    flash("Action not possible.", "error")
+    return redirect(url_for("dashboard"))
+
+@app.route("/accept_delivery/<int:id>")
+def accept_delivery(id):
+    if session.get("role") != "driver":
+        return redirect(url_for("dashboard"))
+        
+    conn = get_db_connection()
+    food = conn.execute("SELECT * FROM food WHERE id = ?", (id,)).fetchone()
+    
+    if food and food["status"] == "approved":
+        conn.execute("UPDATE food SET status = 'out_for_delivery', assigned_driver = ? WHERE id = ?", (session["user"], id))
+        conn.commit()
+        conn.close()
+        flash("Delivery accepted! Please head to the donor location. 🚚", "success")
+        return redirect(url_for("dashboard"))
+        
+    conn.close()
+    flash("Action not possible.", "error")
+    return redirect(url_for("dashboard"))
+
+@app.route("/complete_delivery/<int:id>")
+def complete_delivery(id):
+    if session.get("role") != "driver":
+        return redirect(url_for("dashboard"))
+        
+    conn = get_db_connection()
+    food = conn.execute("SELECT * FROM food WHERE id = ?", (id,)).fetchone()
+    
+    if food and food["status"] == "out_for_delivery" and food["assigned_driver"] == session["user"]:
+        time_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        co2 = float(food["plates"]) * 0.5
+        
+        try:
+            conn.execute("INSERT INTO history (hotel_name, ngo_name, time, co2_saved) VALUES (?, ?, ?, ?)", 
+                         (food["name"], food["requested_by"], time_now, co2))
+        except sqlite3.OperationalError:
+            conn.execute("INSERT INTO history (hotel_name, ngo, time) VALUES (?, ?, ?)", 
+                         (food["name"], food["requested_by"], time_now))
+                         
+        conn.execute("UPDATE food SET status = 'delivered' WHERE id = ?", (id,))
+        
+        # Add points to driver
+        conn.execute("UPDATE users SET points = points + 10 WHERE username = ?", (session["user"],))
+        
+        conn.commit()
+        conn.close()
+        flash("Delivery completed successfully! You earned 10 points! 🏆", "success")
+        return redirect(url_for("dashboard"))
+        
     conn.close()
     flash("Action not possible.", "error")
     return redirect(url_for("dashboard"))
@@ -262,13 +392,13 @@ def history():
     conn = get_db_connection()
     try:
         if session["role"] == "admin":
-            history_data = conn.execute("SELECT hotel_name, ngo_name, time FROM history WHERE hotel_name = ? ORDER BY id DESC", (session["user"],)).fetchall()
+            history_data = conn.execute("SELECT id, hotel_name, ngo_name, time, co2_saved, rating, review FROM history WHERE hotel_name = ? ORDER BY id DESC", (session["user"],)).fetchall()
         else:
-            history_data = conn.execute("SELECT hotel_name, ngo_name, time FROM history WHERE ngo_name = ? ORDER BY id DESC", (session["user"],)).fetchall()
+            history_data = conn.execute("SELECT id, hotel_name, ngo_name, time, co2_saved, rating, review FROM history WHERE ngo_name = ? ORDER BY id DESC", (session["user"],)).fetchall()
     except sqlite3.OperationalError:
         try:
             history_data = conn.execute("""
-                SELECT food.name, history.ngo, history.time
+                SELECT history.id, food.name as hotel_name, history.ngo as ngo_name, history.time, history.co2_saved, history.rating, history.review
                 FROM history
                 JOIN food ON history.food_id = food.id
                 ORDER BY history.id DESC
@@ -278,6 +408,23 @@ def history():
 
     conn.close()
     return render_template("history.html", data=history_data)
+
+@app.route("/rate_history/<int:id>", methods=["POST"])
+def rate_history(id):
+    if session.get("role") != "ngo":
+        return redirect(url_for("history"))
+        
+    rating = request.form.get("rating")
+    review = request.form.get("review")
+    
+    conn = get_db_connection()
+    conn.execute("UPDATE history SET rating = ?, review = ? WHERE id = ?", (rating, review, id))
+    conn.execute("UPDATE users SET points = points + 5 WHERE username = ?", (session["user"],))
+    conn.commit()
+    conn.close()
+    
+    flash("Thank you for your feedback! You earned 5 points.", "success")
+    return redirect(url_for("history"))
 
 @app.route("/logout")
 def logout():
@@ -308,6 +455,13 @@ def api_ai_recommend(food_id):
         
     recommendation = predict_demand(food['food_type'], food['plates'])
     return jsonify({"recommendation": recommendation})
+
+@app.route("/api/chat", methods=["POST"])
+def api_chat():
+    data = request.json
+    msg = data.get("message", "")
+    reply = chat_response(msg)
+    return jsonify({"reply": reply})
 
 if __name__ == "__main__":
     app.run(debug=True)

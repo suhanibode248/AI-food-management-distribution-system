@@ -9,7 +9,15 @@
 <body>
     <nav>
         <div class="nav-brand">FoodShare</div>
-        <div class="nav-links">
+        <div class="nav-links" style="display: flex; align-items: center; gap: 1rem;">
+            <select id="langToggle" style="padding: 3px; background: rgba(0,0,0,0.5); color: white; border: 1px solid var(--border); border-radius: 4px;">
+                <option value="en">English</option>
+                <option value="hi">हिंदी (Hindi)</option>
+                <option value="mr">मराठी (Marathi)</option>
+            </select>
+            <div style="background: rgba(16, 185, 129, 0.2); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; border: 1px solid rgba(16, 185, 129, 0.5);">
+                ⭐ {{ session.points|default(0) }} Points | 🎖️ {{ session.badges|default('Starter') }}
+            </div>
             <span class="nav-user">👤 {{ session.user }}</span>
             <a href="/history">📜 History</a>
             {% if session.role == 'admin' %}
@@ -59,6 +67,11 @@
                 <div class="stat-value">{{ stats.completed_requests }}</div>
                 <div class="stat-label">Requests Fulfilled</div>
             </div>
+            <div class="stat-card" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3);">
+                <div class="stat-icon">🌍</div>
+                <div class="stat-value">{{ stats.co2_saved }} kg</div>
+                <div class="stat-label">CO2 Emissions Saved</div>
+            </div>
         </div>
 
         <div class="welcome mb-4">
@@ -72,7 +85,7 @@
         {% if session.role == 'admin' %}
         <div class="glass-panel mb-4">
             <h3 class="mb-3">➕ Post Food Donation</h3>
-            <form action="/add_food" method="POST">
+            <form action="/add_food" method="POST" enctype="multipart/form-data">
                 <div class="form-group flex gap-2" style="flex-wrap: wrap;">
                     <div style="flex: 1; min-width: 250px;">
                         <label for="name">Donor / Hotel Name</label>
@@ -106,6 +119,20 @@
                     </div>
                 </div>
 
+                <div class="form-group flex gap-2" style="flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <label for="is_veg">Dietary Preference</label>
+                        <select id="is_veg" name="is_veg" required>
+                            <option value="1">🟩 Vegetarian</option>
+                            <option value="0">🟥 Non-Vegetarian</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1; min-width: 250px;">
+                        <label for="image">Food Image (For AI Freshness Check)</label>
+                        <input type="file" id="image" name="image" accept="image/*">
+                    </div>
+                </div>
+
                 <button type="submit" class="btn btn-primary mt-2">✨ Post Donation</button>
             </form>
         </div>
@@ -135,8 +162,8 @@
                                 <div class="food-card-title">{{ f['name'] }}</div>
                                 <div class="food-card-subtitle">📍 {{ f['location'] }}</div>
                             </div>
-                            <span class="status-badge {% if f['status'] == 'available' %}available{% elif f['status'] == 'requested' %}requested{% else %}booked{% endif %}">
-                                {{ f['status']|title }}
+                            <span class="status-badge {% if f['status'] == 'available' %}available{% elif f['status'] == 'requested' %}requested{% elif f['status'] in ['approved', 'out_for_delivery'] %}approved{% else %}booked{% endif %}">
+                                {{ f['status'].replace('_', ' ')|title }}
                             </span>
                         </div>
                         
@@ -147,6 +174,16 @@
                         {% endif %}
 
                         <div class="food-details-grid">
+                            {% if f['image_path'] %}
+                            <div style="grid-column: span 2; text-align: center; margin-bottom: 0.5rem;">
+                                <img src="{{ f['image_path'] }}" alt="Food Image" style="max-height: 120px; border-radius: 8px; border: 1px solid var(--border);">
+                            </div>
+                            {% endif %}
+                            
+                            <div class="detail-item">
+                                <span class="detail-label">Diet</span>
+                                <span class="detail-value">{% if f['is_veg'] %}🟩 Veg{% else %}🟥 Non-Veg{% endif %}</span>
+                            </div>
                             <div class="detail-item">
                                 <span class="detail-label">Type</span>
                                 <span class="detail-value food-type-val">{{ f['food_type'] }}</span>
@@ -165,11 +202,18 @@
                             </div>
                         </div>
 
-                        <!-- AI Badge -->
-                        <div class="ai-badge" id="ai-badge-{{ f['id'] }}">
+                        <!-- AI Badges -->
+                        <div class="ai-badge" id="ai-badge-{{ f['id'] }}" style="margin-bottom: 0.5rem;">
                             <span class="ai-badge-icon">🧠</span>
-                            <span class="ai-badge-text">Generating AI Insights...</span>
+                            <span class="ai-badge-text">Generating AI Route...</span>
                         </div>
+                        
+                        {% if f['ai_freshness_score'] %}
+                        <div class="ai-badge" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4);">
+                            <span class="ai-badge-icon">📷</span>
+                            <span class="ai-badge-text"><strong>AI Freshness:</strong> {{ f['ai_freshness_score'] }}</span>
+                        </div>
+                        {% endif %}
 
                         <div class="mt-2" style="display: flex; gap: 1rem; flex-wrap: wrap;">
                             <!-- Map Link -->
@@ -186,6 +230,14 @@
                                     <button disabled class="btn" style="flex: 2; min-width: 150px; background: #eab308; color: black; font-weight: bold; cursor: not-allowed; opacity: 0.8;">
                                         ⏳ Pending Approval
                                     </button>
+                                {% elif f['status'] == 'approved' and f['requested_by'] == session.user %}
+                                    <button disabled class="btn" style="flex: 2; min-width: 150px; background: #3b82f6; color: white; font-weight: bold; cursor: not-allowed; opacity: 0.8;">
+                                        🚚 Waiting for Driver
+                                    </button>
+                                {% elif f['status'] == 'out_for_delivery' and f['requested_by'] == session.user %}
+                                    <button disabled class="btn" style="flex: 2; min-width: 150px; background: #8b5cf6; color: white; font-weight: bold; cursor: not-allowed; opacity: 0.8;">
+                                        📦 Out for Delivery
+                                    </button>
                                 {% endif %}
                             {% elif session.role == 'admin' %}
                                 {% if f['status'] == 'requested' %}
@@ -194,6 +246,16 @@
                                     </a>
                                     <a href="/reject/{{ f['id'] }}" class="btn" style="flex: 1; min-width: 100px; background: #ef4444; color: white; text-align: center; border: none;">
                                         ❌ Reject
+                                    </a>
+                                {% endif %}
+                            {% elif session.role == 'driver' %}
+                                {% if f['status'] == 'approved' %}
+                                    <a href="/accept_delivery/{{ f['id'] }}" class="btn btn-primary" style="flex: 2; min-width: 150px; text-align: center;">
+                                        🚚 Accept Delivery
+                                    </a>
+                                {% elif f['status'] == 'out_for_delivery' and f['assigned_driver'] == session.user %}
+                                    <a href="/complete_delivery/{{ f['id'] }}" class="btn" style="flex: 2; min-width: 150px; text-align: center; background: #22c55e; color: white;">
+                                        ✅ Mark as Delivered
                                     </a>
                                 {% endif %}
                             {% endif %}
@@ -212,8 +274,48 @@
 
     </div>
 
+    <!-- AI Chatbot UI -->
+    <div id="chatbot-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+        <div id="chatbot-window" style="display: none; width: 300px; height: 400px; background: rgba(0, 0, 0, 0.8); border: 1px solid var(--border); border-radius: 12px; backdrop-filter: blur(10px); flex-direction: column;">
+            <div style="padding: 10px; border-bottom: 1px solid var(--border); background: rgba(16, 185, 129, 0.2); border-radius: 12px 12px 0 0; font-weight: bold; display: flex; justify-content: space-between;">
+                <span>🤖 FoodShare AI Chat</span>
+                <span id="close-chat" style="cursor: pointer;">✖</span>
+            </div>
+            <div id="chat-messages" style="flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; align-self: flex-start; max-width: 80%; font-size: 0.9rem;">
+                    Hi! I'm the FoodShare AI. How can I help you?
+                </div>
+            </div>
+            <div style="padding: 10px; border-top: 1px solid var(--border); display: flex; gap: 8px;">
+                <input type="text" id="chat-input" placeholder="Type a message..." style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: rgba(0,0,0,0.5); color: white;">
+                <button id="send-chat" class="btn btn-primary" style="padding: 8px 12px;">Send</button>
+            </div>
+        </div>
+        <button id="open-chat" class="btn btn-primary" style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 20px var(--primary-glow); float: right; margin-top: 10px;">
+            💬
+        </button>
+    </div>
+
     <!-- Scripts -->
     <script>
+        // Simple Demo Translation Dictionary
+        const translations = {
+            en: { welcome: "Welcome back", total: "Total Donations", history: "History" },
+            hi: { welcome: "वापसी पर स्वागत है", total: "कुल दान", history: "इतिहास" },
+            mr: { welcome: "परत आल्याबद्दल स्वागत आहे", total: "एकूण देणगी", history: "इतिहास" }
+        };
+
+        document.getElementById('langToggle').addEventListener('change', (e) => {
+            const lang = e.target.value;
+            // Extremely basic demo translation for a few elements
+            if(lang !== 'en') {
+                document.querySelectorAll('.welcome h1').forEach(el => el.innerHTML = translations[lang].welcome + "!");
+                document.querySelectorAll('.nav-links a[href="/history"]').forEach(el => el.innerHTML = "📜 " + translations[lang].history);
+            } else {
+                location.reload(); // Reload to reset to English
+            }
+        });
+
         document.addEventListener("DOMContentLoaded", () => {
             // AI Fetch
             const foodCards = document.querySelectorAll('.food-card');
@@ -262,6 +364,69 @@
 
             if(searchInput) searchInput.addEventListener('input', filterCards);
             if(statusFilter) statusFilter.addEventListener('change', filterCards);
+
+            // Chatbot Logic
+            const chatBtn = document.getElementById('open-chat');
+            const closeBtn = document.getElementById('close-chat');
+            const chatWindow = document.getElementById('chatbot-window');
+            const sendBtn = document.getElementById('send-chat');
+            const chatInput = document.getElementById('chat-input');
+            const messagesContainer = document.getElementById('chat-messages');
+
+            chatBtn.addEventListener('click', () => {
+                chatWindow.style.display = 'flex';
+                chatBtn.style.display = 'none';
+            });
+
+            closeBtn.addEventListener('click', () => {
+                chatWindow.style.display = 'none';
+                chatBtn.style.display = 'flex';
+            });
+
+            function appendMessage(text, isUser) {
+                const msg = document.createElement('div');
+                msg.style.padding = '8px';
+                msg.style.borderRadius = '8px';
+                msg.style.maxWidth = '80%';
+                msg.style.fontSize = '0.9rem';
+                msg.style.marginBottom = '4px';
+                if (isUser) {
+                    msg.style.background = 'var(--primary)';
+                    msg.style.color = '#000';
+                    msg.style.alignSelf = 'flex-end';
+                } else {
+                    msg.style.background = 'rgba(255,255,255,0.1)';
+                    msg.style.color = '#fff';
+                    msg.style.alignSelf = 'flex-start';
+                }
+                msg.innerText = text;
+                messagesContainer.appendChild(msg);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            sendBtn.addEventListener('click', async () => {
+                const text = chatInput.value.trim();
+                if(!text) return;
+                
+                appendMessage(text, true);
+                chatInput.value = '';
+
+                try {
+                    const res = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: text })
+                    });
+                    const data = await res.json();
+                    appendMessage(data.reply, false);
+                } catch(e) {
+                    appendMessage("Error connecting to AI.", false);
+                }
+            });
+
+            chatInput.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') sendBtn.click();
+            });
         });
     </script>
 </body>

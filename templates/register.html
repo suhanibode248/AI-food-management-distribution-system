@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FoodShare - Premium Dashboard</title>
+    <title>FoodShare - Register</title>
     <link rel="stylesheet" href="/static/style.css">
     <style>
         .login-wrapper {
@@ -16,7 +16,7 @@
 
         .login-card {
             width: 100%;
-            max-width: 440px;
+            max-width: 500px;
         }
 
         .login-header {
@@ -39,7 +39,7 @@
 
         .role-selector {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 1rem;
             margin-bottom: 1.5rem;
         }
@@ -58,6 +58,7 @@
             border-radius: 14px;
             cursor: pointer;
             transition: all 0.3s ease;
+            text-align: center;
         }
 
         .role-option input[type="radio"]:checked + .role-label {
@@ -74,13 +75,8 @@
 
         .role-text {
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #fff;
-        }
-
-        .role-desc {
-            font-size: 0.75rem;
-            color: var(--text-muted);
         }
 
         .submit-btn {
@@ -89,15 +85,6 @@
             margin-top: 1rem;
             font-size: 1.05rem;
         }
-        
-        .demo-creds {
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border);
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
     </style>
 </head>
 <body>
@@ -105,30 +92,48 @@
         <div class="glass-panel login-card animate-fade-up">
             <div class="login-header">
                 <span class="login-icon">✨</span>
-                <h1 class="text-gradient mb-1">FoodShare</h1>
-                <p style="color: var(--text-muted)">Intelligent Food Redistribution</p>
+                <h1 class="text-gradient mb-1">Create Account</h1>
+                <p style="color: var(--text-muted)">Join FoodShare today</p>
             </div>
 
-            <form action="/login" method="POST">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" placeholder="Enter your username" required>
+            <!-- Flash Messages Toasts -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                <div class="toast-container" style="position: static; margin-bottom: 1rem;">
+                  {% for category, message in messages %}
+                    <div class="toast {{ category }}" style="animation: none; margin-bottom: 0;">
+                        <div class="toast-message">{{ message }}</div>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            {% endwith %}
+
+            <form action="/register" method="POST">
+                <div class="form-group flex gap-2" style="flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" placeholder="Choose a username" required>
+                    </div>
+                    <div style="flex: 1; min-width: 200px;">
+                        <label for="phone">Phone Number</label>
+                        <input type="text" id="phone" name="phone" placeholder="Contact number" required>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    <input type="password" id="password" name="password" placeholder="Create a strong password" required>
                 </div>
 
                 <div class="form-group">
-                    <label>Select Role</label>
+                    <label>Select Your Role</label>
                     <div class="role-selector">
                         <label class="role-option">
                             <input type="radio" name="role" value="admin" required>
                             <div class="role-label">
                                 <span class="role-icon">🏨</span>
-                                <span class="role-text">Donor / Admin</span>
-                                <span class="role-desc">Provide Food</span>
+                                <span class="role-text">Donor</span>
                             </div>
                         </label>
                         <label class="role-option">
@@ -136,33 +141,23 @@
                             <div class="role-label">
                                 <span class="role-icon">❤️</span>
                                 <span class="role-text">NGO</span>
-                                <span class="role-desc">Receive Food</span>
                             </div>
+                        </label>
                         <label class="role-option">
                             <input type="radio" name="role" value="driver">
                             <div class="role-label">
                                 <span class="role-icon">🚚</span>
                                 <span class="role-text">Driver</span>
-                                <span class="role-desc">Deliver Food</span>
                             </div>
                         </label>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary submit-btn">Secure Login</button>
+                <button type="submit" class="btn btn-primary submit-btn">Sign Up</button>
             </form>
 
             <div style="margin-top: 1.5rem; text-align: center; font-size: 0.9rem;">
-                <p style="color: var(--text-muted)">Don't have an account? <a href="/register" style="color: var(--primary); text-decoration: none; font-weight: bold;">Register here</a></p>
-            </div>
-
-            <div class="demo-creds">
-                <p>Demo Credentials (Password: 1234)</p>
-                <div style="margin-top: 0.5rem; display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
-                    <span><strong style="color:var(--primary)">Admin:</strong> admin</span>
-                    <span><strong style="color:var(--secondary)">NGO:</strong> ngo1</span>
-                    <span><strong style="color:#eab308">Driver:</strong> driver1</span>
-                </div>
+                <p style="color: var(--text-muted)">Already have an account? <a href="/login" style="color: var(--primary); text-decoration: none; font-weight: bold;">Login here</a></p>
             </div>
         </div>
     </div>
