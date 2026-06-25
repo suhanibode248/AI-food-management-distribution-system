@@ -16,7 +16,7 @@
             <span class="nav-user">🧑‍🍳 {{ session.user }}</span>
             <a href="/history">🕰️ History</a>
             {% if session.role == 'admin' %}
-            <a href="/admin">🎛️ Admin</a>
+            <a href="/reset">🎛️ Reset</a>
             {% endif %}
             <a href="/logout">🚶 Logout</a>
         </div>
@@ -273,12 +273,12 @@
     <div id="chatbot-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
         <div id="chatbot-window" style="display: none; width: 300px; height: 400px; background: rgba(0, 0, 0, 0.8); border: 1px solid var(--border); border-radius: 12px; backdrop-filter: blur(10px); flex-direction: column;">
             <div style="padding: 10px; border-bottom: 1px solid var(--border); background: rgba(16, 185, 129, 0.2); border-radius: 12px 12px 0 0; font-weight: bold; display: flex; justify-content: space-between;">
-                <span>🦉 SmartShare Assistant</span>
+                <span>🦉 FoodShare AI Chat</span>
                 <span id="close-chat" style="cursor: pointer;">✖</span>
             </div>
             <div id="chat-messages" style="flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
                 <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; align-self: flex-start; max-width: 80%; font-size: 0.9rem;">
-                    Hi! I'm the FoodShare Assistant. How can I help you today?
+                    Hi! I'm the FoodShare AI. How can I help you?
                 </div>
             </div>
             <div style="padding: 10px; border-top: 1px solid var(--border); display: flex; gap: 8px;">
