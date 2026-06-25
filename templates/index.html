@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodShare - The Future of Food Redistribution</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero h1 {
+            font-size: 4.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+
+        .cta-group {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cta-btn {
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .cta-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+            color: white;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .cta-primary:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(16, 185, 129, 0.6);
+        }
+
+        .cta-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+
+        .cta-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .feature-card {
+            background: rgba(20, 25, 35, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            padding: 2.5rem;
+            border-radius: 20px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+            filter: drop-shadow(0 0 10px var(--primary-glow));
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-desc {
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Nav specific to index */
+        .index-nav {
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: absolute;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+        }
+
+        .index-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <nav class="index-nav animate-fade-up">
+        <a href="/" class="index-brand">✨ FoodShare</a>
+        <div>
+            <a href="/login" class="cta-btn cta-secondary" style="padding: 0.6rem 1.5rem; font-size: 0.95rem;">Login</a>
+        </div>
+    </nav>
+
+    <div class="hero animate-fade-up">
+        <h1 class="text-gradient">End Hunger.<br>Zero Waste.</h1>
+        <p>An intelligent platform connecting restaurants with excess food to NGOs in real-time, powered by predictive AI.</p>
+        <div class="cta-group">
+            <a href="/login" class="cta-btn cta-primary">Get Started Now</a>
+        </div>
+    </div>
+
+    <div class="features animate-fade-up" style="animation-delay: 0.2s;">
+        <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3 class="feature-title">Real-Time Routing</h3>
+            <p class="feature-desc">Instantly alert nearby NGOs when surplus food becomes available, reducing wait times and preventing spoilage.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🧠</div>
+            <h3 class="feature-title">AI Predictions</h3>
+            <p class="feature-desc">Leverage LLM technology to predict which NGOs have the capacity to handle specific food volumes.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3 class="feature-title">Live Analytics</h3>
+            <p class="feature-desc">Track your total impact, meals provided, and actively monitor your community contributions.</p>
+        </div>
+    </div>
+
+</body>
+</html>

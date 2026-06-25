@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodShare - Premium Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .login-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .login-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+            filter: drop-shadow(0 0 20px var(--primary-glow));
+            animation: float-icon 4s ease-in-out infinite;
+        }
+
+        @keyframes float-icon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .role-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .role-option input[type="radio"] {
+            display: none;
+        }
+
+        .role-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.2rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .role-option input[type="radio"]:checked + .role-label {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+            transform: translateY(-2px);
+        }
+
+        .role-icon {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .role-text {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #fff;
+        }
+
+        .role-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 1.05rem;
+        }
+        
+        .demo-creds {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="glass-panel login-card animate-fade-up">
+            <div class="login-header">
+                <span class="login-icon">✨</span>
+                <h1 class="text-gradient mb-1">FoodShare</h1>
+                <p style="color: var(--text-muted)">Intelligent Food Redistribution</p>
+            </div>
+
+            <form action="/login" method="POST">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Select Role</label>
+                    <div class="role-selector">
+                        <label class="role-option">
+                            <input type="radio" name="role" value="admin" required>
+                            <div class="role-label">
+                                <span class="role-icon">🏨</span>
+                                <span class="role-text">Donor / Admin</span>
+                                <span class="role-desc">Provide Food</span>
+                            </div>
+                        </label>
+                        <label class="role-option">
+                            <input type="radio" name="role" value="ngo">
+                            <div class="role-label">
+                                <span class="role-icon">❤️</span>
+                                <span class="role-text">NGO</span>
+                                <span class="role-desc">Receive Food</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary submit-btn">Secure Login</button>
+            </form>
+
+            <div class="demo-creds">
+                <p>Demo Credentials</p>
+                <div style="margin-top: 0.5rem; display: flex; justify-content: center; gap: 1rem;">
+                    <span><strong style="color:var(--primary)">Admin:</strong> admin / 1234</span>
+                    <span><strong style="color:var(--secondary)">NGO:</strong> ngo1 / 1234</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodShare - History</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav>
+        <div class="nav-brand">FoodShare</div>
+        <div class="nav-links">
+            <a href="/dashboard">⬅ Back to Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="container animate-fade-up">
+        <div class="welcome mb-3">
+            <h1 class="text-gradient">📜 Request History</h1>
+            <p>Track past food redistributions and their impact.</p>
+        </div>
+
+        {% if data %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hotel / Donor</th>
+                        <th>NGO Received</th>
+                        <th>Time & Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in data %}
+                    <tr>
+                        <td><strong>{{h[0]}}</strong></td>
+                        <td><span style="color: var(--secondary)">{{h[1]}}</span></td>
+                        <td style="color: var(--text-muted)">{{h[2]}}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state glass-panel mt-4">
+            <div class="empty-state-icon">📭</div>
+            <h3 class="mb-1">No History Yet</h3>
+            <p>Once a food donation is booked, it will appear here.</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

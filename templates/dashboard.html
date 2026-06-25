@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodShare - Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav>
+        <div class="nav-brand">FoodShare</div>
+        <div class="nav-links">
+            <span class="nav-user">👤 {{ session.user }}</span>
+            <a href="/history">📜 History</a>
+            {% if session.role == 'admin' %}
+            <a href="/reset">🔄 Reset</a>
+            {% endif %}
+            <a href="/logout">🚪 Logout</a>
+        </div>
+    </nav>
+
+    <!-- Flash Messages Toasts -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="toast-container">
+          {% for category, message in messages %}
+            <div class="toast {{ category }}">
+                <div class="toast-icon">
+                    {% if category == 'success' %}✅{% else %}⚠️{% endif %}
+                </div>
+                <div class="toast-message">{{ message }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="container animate-fade-up">
+        
+        <!-- Live Stats Dashboard -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🍲</div>
+                <div class="stat-value">{{ stats.total_food }}</div>
+                <div class="stat-label">Total Donations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🍽️</div>
+                <div class="stat-value">{{ stats.total_plates }}</div>
+                <div class="stat-label">Meals Provided</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🤝</div>
+                <div class="stat-value">{{ stats.active_ngos }}</div>
+                <div class="stat-label">Active NGOs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-value">{{ stats.completed_requests }}</div>
+                <div class="stat-label">Requests Fulfilled</div>
+            </div>
+        </div>
+
+        <div class="welcome mb-4">
+            <h1 class="text-gradient">Welcome back, {{ session.user }}!</h1>
+            <div class="welcome-content">
+                <p>Track donations, predict demand, and reduce food waste efficiently.</p>
+            </div>
+        </div>
+
+        <!-- Admin: Add Food Section -->
+        {% if session.role == 'admin' %}
+        <div class="glass-panel mb-4">
+            <h3 class="mb-3">➕ Post Food Donation</h3>
+            <form action="/add_food" method="POST">
+                <div class="form-group flex gap-2" style="flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <label for="name">Donor / Hotel Name</label>
+                        <input type="text" id="name" name="name" placeholder="e.g., Grand Hotel Mumbai" required>
+                    </div>
+                    <div style="flex: 1; min-width: 250px;">
+                        <label for="food_type">Food Type</label>
+                        <input type="text" id="food_type" name="food_type" placeholder="e.g., Mixed Buffet" required>
+                    </div>
+                </div>
+
+                <div class="form-group flex gap-2" style="flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <label for="plates">Number of Plates</label>
+                        <input type="number" id="plates" name="plates" placeholder="50" min="1" required>
+                    </div>
+                    <div style="flex: 1; min-width: 250px;">
+                        <label for="location">Location</label>
+                        <input type="text" id="location" name="location" placeholder="e.g., Bandra West" required>
+                    </div>
+                </div>
+
+                <div class="form-group flex gap-2" style="flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <label for="prep_time">Prepared Time</label>
+                        <input type="datetime-local" id="prep_time" name="prep_time" required>
+                    </div>
+                    <div style="flex: 1; min-width: 250px;">
+                        <label for="expiry">Expiry Time</label>
+                        <input type="datetime-local" id="expiry" name="expiry" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary mt-2">✨ Post Donation</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Food Listings -->
+        <div>
+            <div class="flex" style="justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <h3 class="mb-2">Active Food Feed</h3>
+            </div>
+            
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search food by name, type, or location...">
+                <select id="statusFilter" class="filter-select">
+                    <option value="all">All Status</option>
+                    <option value="available">Available</option>
+                    <option value="booked">Booked</option>
+                </select>
+            </div>
+
+            {% if food %}
+                <div class="food-grid" id="foodGrid">
+                    {% for f in food %}
+                    <div class="food-card" data-food-id="{{ f['id'] }}" data-status="{{ f['status'] }}">
+                        <div class="food-card-header">
+                            <div>
+                                <div class="food-card-title">{{ f['name'] }}</div>
+                                <div class="food-card-subtitle">📍 {{ f['location'] }}</div>
+                            </div>
+                            <span class="status-badge {% if f['status'] == 'available' %}available{% else %}booked{% endif %}">
+                                {{ f['status'] }}
+                            </span>
+                        </div>
+
+                        <div class="food-details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Type</span>
+                                <span class="detail-value food-type-val">{{ f['food_type'] }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Plates</span>
+                                <span class="detail-value">{{ f['plates'] }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Prepared</span>
+                                <span class="detail-value">{{ f['prep_time'] }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Expiry</span>
+                                <span class="detail-value">{{ f['expiry'] }}</span>
+                            </div>
+                        </div>
+
+                        <!-- AI Badge -->
+                        <div class="ai-badge" id="ai-badge-{{ f['id'] }}">
+                            <span class="ai-badge-icon">🧠</span>
+                            <span class="ai-badge-text">Generating AI Insights...</span>
+                        </div>
+
+                        <div class="mt-2" style="display: flex; gap: 1rem;">
+                            <!-- Map Link -->
+                            <a href="https://www.google.com/maps/search/{{ f['location'] }}" target="_blank" class="btn" style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid var(--border); text-align: center;">
+                                📍 Map
+                            </a>
+
+                            {% if f['status'] == 'available' and session.role == 'ngo' %}
+                                <a href="/request/{{ f['id'] }}" class="btn btn-primary" style="flex: 2; text-align: center;">
+                                    ✨ Request Food
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state glass-panel mt-4">
+                    <div class="empty-state-icon">🌾</div>
+                    <h3 class="mb-1">No active donations</h3>
+                    <p>Check back later or refresh the feed.</p>
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // AI Fetch
+            const foodCards = document.querySelectorAll('.food-card');
+            foodCards.forEach(card => {
+                const foodId = card.getAttribute('data-food-id');
+                const badgeText = document.querySelector(`#ai-badge-${foodId} .ai-badge-text`);
+                
+                fetch(`/api/ai_recommend/${foodId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.recommendation) {
+                            badgeText.innerHTML = `<strong>AI Suggests:</strong> ${data.recommendation}`;
+                        } else {
+                            badgeText.innerText = "AI Recommendation unavailable.";
+                        }
+                    })
+                    .catch(err => {
+                        badgeText.innerText = "AI Offline";
+                    });
+            });
+
+            // Live Search Logic
+            const searchInput = document.getElementById('searchInput');
+            const statusFilter = document.getElementById('statusFilter');
+
+            function filterCards() {
+                const query = searchInput.value.toLowerCase();
+                const status = statusFilter.value;
+
+                foodCards.forEach(card => {
+                    const name = card.querySelector('.food-card-title').innerText.toLowerCase();
+                    const loc = card.querySelector('.food-card-subtitle').innerText.toLowerCase();
+                    const type = card.querySelector('.food-type-val').innerText.toLowerCase();
+                    const cardStatus = card.getAttribute('data-status');
+
+                    const matchesSearch = name.includes(query) || loc.includes(query) || type.includes(query);
+                    const matchesStatus = (status === 'all') || (status === cardStatus);
+
+                    if (matchesSearch && matchesStatus) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+
+            if(searchInput) searchInput.addEventListener('input', filterCards);
+            if(statusFilter) statusFilter.addEventListener('change', filterCards);
+        });
+    </script>
+</body>
+</html>
