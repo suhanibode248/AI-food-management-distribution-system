@@ -83,6 +83,51 @@ def get_dashboard_stats():
 
 # ----------------- ROUTES -----------------
 
+@app.route("/setup_db")
+def setup_db():
+    try:
+        conn = get_db_connection()
+        conn.execute("""
+        CREATE TABLE IF NOT EXISTS food (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            food_type TEXT,
+            plates INTEGER,
+            location TEXT,
+            prep_time TEXT,
+            expiry TEXT,
+            status TEXT
+        )
+        """)
+        conn.execute("""
+        CREATE TABLE IF NOT EXISTS history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            food_id INTEGER,
+            hotel_name TEXT,
+            ngo_name TEXT,
+            ngo TEXT,
+            time TEXT
+        )
+        """)
+        conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            password TEXT,
+            role TEXT
+        )
+        """)
+        users = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        if users == 0:
+            conn.execute("INSERT INTO users VALUES (NULL, 'admin', '1234', 'admin')")
+            conn.execute("INSERT INTO users VALUES (NULL, 'ngo1', '1234', 'ngo')")
+        conn.commit()
+        conn.close()
+        return "Database created successfully! You can now visit /login", 200
+    except Exception as e:
+        import traceback
+        return f"Database creation failed: {str(e)}\n\n{traceback.format_exc()}", 500
+
 @app.route("/")
 def index():
     if 'user' in session:
