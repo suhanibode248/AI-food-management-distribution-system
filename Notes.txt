@@ -1,0 +1,58 @@
+1. PROJECT DESCRIPTION
+FoodShare is an AI-powered food management and distribution system. It acts as a bridge between food donors (like hotels, restaurants, and event organizers), NGOs/Receivers, and Delivery Partners to minimize food waste. The platform intelligently handles the logistics of surplus food, incorporates gamification to reward positive impact (CO2 saved, points, and badges), and integrates artificial intelligence to estimate food freshness and demand routing.
+
+2. REQUIREMENTS
+- Python 3.8+
+- Flask (`pip install Flask`)
+- Werkzeug (`pip install Werkzeug`)
+- Groq (`pip install groq`)
+
+3. HOW TO RUN PROJECT
+1. Clone the repository and navigate into the project directory: `cd food_waste_system`
+2. Install the required dependencies: `pip install -r requirements.txt`
+3. (Optional) Set your Groq API key for AI features: `export GROQ_API_KEY="your_key"`
+4. Run the Flask server: `python app.py`
+5. Open your web browser and go to `http://127.0.0.1:5000`
+
+4. HOW IT WORKS (TECH FLOW)
+1. Registration/Login: Users create an account as an Admin (Donor), NGO, or Driver. Passwords are securely hashed.
+2. Donation (Admin): The donor posts details of surplus food (type, plates, veg/non-veg, prep time) and an optional image. 
+3. AI Processing: The system uses an AI heuristic to scan the prep time and predict freshness ("95% Fresh"). 
+4. Request (NGO): NGOs view available food and request it.
+5. Approval (Admin): The Admin approves the request, placing it in the delivery queue.
+6. Logistics (Driver): Drivers view approved requests, accept the delivery, and ultimately mark it as delivered.
+7. Gamification & History: Upon delivery completion, the CO2 saved is calculated. The users earn points, and NGOs can rate the delivery.
+
+5. FEATURES
+- End-to-End Role-Based Access: Dedicated views and actions for Admins, NGOs, and Drivers.
+- Secure Authentication: Password hashing via Werkzeug.
+- AI Freshness Scanner: Heuristic-based food safety checking.
+- AI Chatbot: Built-in floating assistant widget.
+- Real-Time Environmental Impact Tracking: Dynamic CO2 emissions saved metric.
+- Gamification: Point systems, user badges, and star ratings for deliveries.
+- Modern UI: Fully responsive, glassmorphism design.
+
+6. COMMON ISSUES & FIXES
+- "No active donations after deployment": Cloud platforms like Render use ephemeral filesystems. You need to register and re-add data, or ensure seed data exists in `init_db`.
+- Database locked errors: SQLite doesn't handle high concurrent writes well. Restart the server or deploy with PostgreSQL for production.
+- AI Chatbot / Features not responding: Ensure the `GROQ_API_KEY` is properly set in your environment variables.
+- Password not matching on old accounts: Old accounts used plain-text passwords; V4 uses hashed passwords. Reset your DB or register a new user.
+
+7. SUPPORTED BROWSERS
+- Google Chrome (Recommended)
+- Mozilla Firefox
+- Safari
+- Microsoft Edge
+
+8. TIPS FOR BEST RESULTS
+- Set up a robust cloud database like Supabase or Neon (PostgreSQL) if deploying to Render, to avoid losing data on every restart.
+- Use a `.env` file for storing your Groq API keys locally.
+- Use square, high-quality images when testing the food upload to ensure the UI scales correctly.
+
+9. AUTHOR
+Name: Suhani Bode
+Organization: [RtMN University Nagpur]
+
+10. PROJECT LINK
+Deploy Link: []
+GitHub: https://github.com/suhanibode248/AI-food-management-distribution-system
