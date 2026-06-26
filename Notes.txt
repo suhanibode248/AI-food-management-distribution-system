@@ -54,5 +54,5 @@ Name: Suhani Bode
 Organization: [RtMN University Nagpur]
 
 10. PROJECT LINK
-Deploy Link: []
+Deploy Link: [https://ai-food-management-distribution-system.onrender.com/]
 GitHub: https://github.com/suhanibode248/AI-food-management-distribution-system
