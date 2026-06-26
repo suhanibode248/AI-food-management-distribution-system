@@ -1,0 +1,23 @@
+food_waste_system/
+├── static/
+│   ├── style.css
+│   ├── script.js
+│   └── uploads/
+├── templates/
+│   ├── dashboard.html
+│   ├── history.html
+│   ├── index.html
+│   ├── login.html
+│   └── register.html
+├── scratch/
+├── app.py
+├── model.py
+├── requirements.txt
+├── database.db
+├── bulk_insert.py
+├── create_db.py
+├── insert_data.py
+├── sms.py
+├── update_db.py
+├── update_db_v3.py
+└── update_db_v4.py
